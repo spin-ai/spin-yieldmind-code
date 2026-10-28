@@ -12,11 +12,12 @@ TEMPLATE = (
 def build(ctx):
     summary = tool("n_summary", "lot_summary", "批次良率总览", args={"lot_id": "${inputs.lot}"})
     pareto = tool("n_pareto", "lot_pareto", "失效 Pareto", args={"lot_id": "${inputs.lot}"}, depends_on=["n_summary"])
+    common = tool("n_common", "commonality", "机台 / 腔体共通性", args={"dim": "tester"}, depends_on=["n_pareto"])
     gate = condition(
         "n_gate",
         "${steps.n_summary.raw.yield} < ${inputs.target}",
         on_true="n_score", on_false="n_ok",
-        title="低良率判定", depends_on=["n_pareto"],
+        title="低良率判定", depends_on=["n_common"],
     )
     score = code(
         "n_score", "可疑资源评分",
@@ -29,7 +30,7 @@ def build(ctx):
     ok = output("n_ok", "良率正常", template="LOT ${ctx.lot} 良率未低于目标，无需处置。", depends_on=["n_gate"])
     return spec(
         "低良率归因与处置（代码定义）",
-        [summary, pareto, gate, score, ap, out, ok],
+        [summary, pareto, common, gate, score, ap, out, ok],
         description="由 spin-yieldmind-code/workflows/low_yield_triage 自动生成。",
         inputs={
             "lot": {"type": "string", "required": True, "source": "ctx.lot"},
