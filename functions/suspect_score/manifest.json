@@ -1,0 +1,21 @@
+{
+  "id": "yield/suspect_score",
+  "title": "可疑机台/腔体评分",
+  "description": "读取共通性节点的 suspects，按 lift 阈值筛出可疑资源，输出评分、Top 资源与样本量。",
+  "entry": "function.py",
+  "runtime": "python3.11",
+  "timeout_s": 5,
+  "network": false,
+  "inputs": {
+    "lift_threshold": {"type": "number", "required": false, "default": 3.0, "description": "lift 阈值，低于该值不计入"}
+  },
+  "output_schema": {
+    "suspect_score": "number",
+    "top_resource": "string",
+    "sample_size": "integer"
+  },
+  "skills": ["skills.contract"],
+  "tags": ["良率", "共通性", "评分"],
+  "author": "YieldMind",
+  "version": "1.0.0"
+}

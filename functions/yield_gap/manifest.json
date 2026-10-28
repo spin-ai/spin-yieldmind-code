@@ -1,0 +1,23 @@
+{
+  "id": "yield/yield_gap",
+  "title": "良率差距与最差片",
+  "description": "从良率总览节点读取 yield，计算与目标良率的差距，并给出最差 wafer。",
+  "entry": "function.py",
+  "runtime": "python3.11",
+  "timeout_s": 5,
+  "network": false,
+  "inputs": {
+    "summary_node": {"type": "string", "required": false, "default": "n_summary", "description": "上游良率总览节点 id"},
+    "target": {"type": "number", "required": false, "default": 96.5, "description": "目标良率（%）"}
+  },
+  "output_schema": {
+    "yield_pct": "number",
+    "gap_pp": "number",
+    "worst_wafer": "string",
+    "lot": "string"
+  },
+  "skills": ["skills.contract", "skills.yield_utils"],
+  "tags": ["良率", "差距", "最差片"],
+  "author": "YieldMind",
+  "version": "1.0.0"
+}
