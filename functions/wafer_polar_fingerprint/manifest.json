@@ -1,0 +1,30 @@
+{
+  "id": "yield/wafer_polar_fingerprint",
+  "title": "晶圆极坐标指纹识别",
+  "description": "8×16 极坐标占用 + 边缘扇区集中度 + 形状/连通特征，与 9 类签名原型做加权距离匹配；从上游 wafer_map 的 raw.features 读取特征，输出概率分布与可解释 drivers。",
+  "entry": "function.py",
+  "runtime": "python3.11",
+  "timeout_s": 5,
+  "network": false,
+  "inputs": {
+    "map_node": {"type": "string", "required": false, "default": "n_map", "description": "上游 wafer_map 节点 id"},
+    "features": {"type": "object", "required": false, "default": null, "description": "可选：直接传入特征对象；不传则读 steps[map_node].raw.features"}
+  },
+  "output_schema": {
+    "signature": "string",
+    "label": "string",
+    "score": "number",
+    "runner_up": "string",
+    "margin": "number",
+    "distance": "number",
+    "fail_rate": "number",
+    "drivers": "array",
+    "features": "object",
+    "wafer_id": "string",
+    "lot": "string"
+  },
+  "skills": ["skills.contract"],
+  "tags": ["晶圆图", "签名", "极坐标", "指纹", "pattern"],
+  "author": "YieldMind",
+  "version": "1.0.0"
+}

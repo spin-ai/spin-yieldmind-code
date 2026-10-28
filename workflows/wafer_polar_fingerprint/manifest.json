@@ -1,0 +1,10 @@
+{
+  "id": "quality/wafer_polar_fingerprint",
+  "title": "极坐标指纹识别（代码定义）",
+  "description": "良率总览 → Wafer Map → 极坐标指纹代码函数 → 结论；演示代码库函数如何参与分析路径。",
+  "entry": "workflow.py",
+  "version": "1.0.0",
+  "timeout_s": 5,
+  "tags": ["晶圆图", "签名", "极坐标", "指纹", "workflow-as-code"],
+  "author": "YieldMind"
+}
