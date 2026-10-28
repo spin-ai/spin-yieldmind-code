@@ -17,6 +17,9 @@ skills/                     # 平台/团队维护的辅助库（只读依赖）
 functions/<folder>/
   manifest.json             # 函数 id、输入、输出 Schema、运行时、超时、依赖的 skills
   function.py               # def run(ctx, inputs, steps) -> dict
+workflows/<folder>/
+  manifest.json             # 工作流 id、标题、版本、tags
+  workflow.py               # def build(ctx) -> WorkflowSpec（节点由代码自动生成）
 ```
 
 ## 函数契约（必须满足）
@@ -30,6 +33,31 @@ functions/<folder>/
    副作用请用工作流的 `action + approval` 节点。
 7. 代码 ≤ 20,000 字符；超时 1–10 秒；默认无网络。
 
+## 工作流也可以代码定义（workflow-as-code）
+
+`workflows/<name>/workflow.py` 里用 DSL 生成节点，平台执行 `build()` 后转成 WorkflowSpec：
+
+```python
+from skills.workflow import approval, code, condition, output, spec, tool
+
+def build(ctx):
+    return spec("低良率归因", [
+        tool("n_summary", "lot_summary", "良率总览", args={"lot_id": "${inputs.lot}"}),
+        condition("n_gate", "${steps.n_summary.raw.yield} < ${inputs.target}",
+                  on_true="n_score", on_false="n_ok", depends_on=["n_summary"]),
+        code("n_score", "可疑资源评分", function="yield/suspect_score", depends_on=["n_gate"]),
+        approval("n_ap", "工程师确认", depends_on=["n_score"]),
+        output("n_out", "结论", depends_on=["n_ap"]),
+        output("n_ok", "良率正常", depends_on=["n_gate"]),
+    ])
+```
+
+- `spec / tool / condition / code / approval / action / output / chain` 是 DSL；
+- `code(function="yield/xxx")` 直接引用同仓库 `functions/` 的函数，不用复制代码；
+- 平台会执行 `build()`（受限沙箱）、校验 WorkflowSpec、替换函数快照；
+- 代码节点仍为「待评审」，发布时冻结 `code_hash`；
+- 在 `/28` 用「从代码库创建」或「代码重建」导入。
+
 ## 可以使用的 skills
 
 ```python
@@ -37,6 +65,7 @@ from skills.contract import rows, number, require
 from skills.stats import mean, std, percentile, cpk
 from skills.tables import table_rows, column, group_by, top_by
 from skills.yield_utils import node_yield, worst_wafer
+from skills.workflow import spec, tool, condition, code, approval, action, output, chain
 ```
 
 `skills/` 里的代码同样受静态校验（不允许 `os` / `socket` / `open` / `eval` 等），

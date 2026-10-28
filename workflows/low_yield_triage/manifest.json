@@ -1,0 +1,10 @@
+{
+  "id": "yield/low_yield_triage",
+  "title": "低良率归因与处置（代码定义）",
+  "description": "良率总览 → 失效 Pareto → 低良率判定 → 代码库评分 → 审批 → 结论；节点由 workflow.py 自动生成。",
+  "entry": "workflow.py",
+  "version": "1.0.0",
+  "timeout_s": 5,
+  "tags": ["良率", "归因", "审批", "workflow-as-code"],
+  "author": "YieldMind"
+}

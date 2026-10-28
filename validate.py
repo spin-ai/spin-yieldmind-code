@@ -25,7 +25,7 @@ ALLOWED_OUTPUT = {"number", "integer", "string", "boolean", "array", "object", "
 ID_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 
 
-def check_code(path, need_run):
+def check_code(path, entry=None):
     code = path.read_text("utf-8")
     if len(code) > 20000:
         raise ValueError("代码超过 20,000 字符")
@@ -49,10 +49,10 @@ def check_code(path, need_run):
                 raise ValueError(f"禁止使用 {node.id}")
         if isinstance(node, ast.Attribute) and node.attr.startswith("__"):
             raise ValueError(f"禁止访问属性 {node.attr}")
-    if need_run:
-        has_run = any(isinstance(n, ast.FunctionDef) and n.name == "run" for n in tree.body)
-        if not has_run:
-            raise ValueError("必须定义 run(ctx, inputs, steps)")
+    if entry:
+        found = any(isinstance(n, ast.FunctionDef) and n.name == entry for n in tree.body)
+        if not found:
+            raise ValueError("必须定义 " + entry + "(...)")
 
 
 def main():
@@ -60,7 +60,7 @@ def main():
     skills = set()
     for p in sorted((ROOT / "skills").rglob("*.py")):
         try:
-            check_code(p, need_run=False)
+            check_code(p)
             rel = p.relative_to(ROOT).with_suffix("")
             parts = list(rel.parts)
             if parts and parts[-1] == "__init__":
@@ -98,10 +98,34 @@ def main():
             entry = folder / str(m.get("entry") or "function.py")
             if not entry.is_file():
                 raise ValueError(f"找不到入口 {entry.name}")
-            check_code(entry, need_run=True)
+            check_code(entry, entry="run")
             if m["id"] in ids:
                 raise ValueError("id 重复")
             ids.add(m["id"])
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{folder}: {exc}")
+
+    wf_ids = set()
+    for folder in sorted((ROOT / "workflows").iterdir()) if (ROOT / "workflows").is_dir() else []:
+        if not folder.is_dir():
+            continue
+        mpath = folder / "manifest.json"
+        if not mpath.is_file():
+            errors.append(f"{folder}: 缺少 manifest.json")
+            continue
+        try:
+            m = json.loads(mpath.read_text("utf-8"))
+            if not ID_RE.fullmatch(str(m.get("id") or "")):
+                raise ValueError("id 必须形如 group/name")
+            if not m.get("title"):
+                raise ValueError("缺少 title")
+            entry = folder / str(m.get("entry") or "workflow.py")
+            if not entry.is_file():
+                raise ValueError(f"找不到入口 {entry.name}")
+            check_code(entry, entry="build")
+            if m["id"] in wf_ids:
+                raise ValueError("id 重复")
+            wf_ids.add(m["id"])
         except Exception as exc:  # noqa: BLE001
             errors.append(f"{folder}: {exc}")
 
@@ -110,7 +134,7 @@ def main():
         for e in errors:
             print(" -", e)
         return 1
-    print(f"OK：{len(ids)} 个函数，{len(skills)} 个 skills")
+    print(f"OK：{len(ids)} 个函数，{len(wf_ids)} 个工作流，{len(skills)} 个 skills")
     return 0
 
 
